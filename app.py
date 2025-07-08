@@ -27,12 +27,7 @@ app = FastAPI(
 # Configuración del Bot Framework Adapter para UserAssignedMSI
 bot_settings = BotFrameworkAdapterSettings(
     app_id=BOT_APP_ID,
-    app_password="",  # Vacío para Managed Identity
-    auth_configuration={
-        "MicrosoftAppType": "UserAssignedMSI",
-        "MicrosoftAppId": BOT_APP_ID,
-        "MicrosoftAppTenantId": "b635abac-3d71-42e5-9e87-46b8c879f099"
-    }
+    app_password=""  # Vacío para Managed Identity
 )
 adapter = BotFrameworkAdapter(bot_settings)
 
