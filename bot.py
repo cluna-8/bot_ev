@@ -36,7 +36,7 @@ class TeamsOpenAIBot(ActivityHandler):
             # Función para obtener el token de Azure AD
             async def get_azure_ad_token():
                 token = credential.get_token("https://cognitiveservices.azure.com/.default")
-                return token.token
+                return token.access_token
             
             # Crear cliente async de Azure OpenAI
             self.openai_client = AsyncAzureOpenAI(
