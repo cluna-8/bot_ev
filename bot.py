@@ -33,16 +33,14 @@ class TeamsOpenAIBot(ActivityHandler):
             # Crear credential usando Managed Identity
             credential = DefaultAzureCredential()
             
-            # Función para obtener el token de Azure AD
-            async def get_azure_ad_token():
-                token = credential.get_token("https://cognitiveservices.azure.com/.default")
-                return token.access_token
+            # Obtener token inmediatamente para verificar que funciona
+            token = credential.get_token("https://cognitiveservices.azure.com/.default")
             
-            # Crear cliente async de Azure OpenAI
+            # Crear cliente async de Azure OpenAI con token fijo
             self.openai_client = AsyncAzureOpenAI(
                 azure_endpoint=AZURE_OPENAI_ENDPOINT,
                 api_version=AZURE_OPENAI_API_VERSION,
-                azure_ad_token_provider=get_azure_ad_token,
+                azure_ad_token=token.access_token,
                 default_headers={"User-Agent": "Teams-Bot/1.0"}
             )
             
@@ -51,7 +49,7 @@ class TeamsOpenAIBot(ActivityHandler):
         except Exception as e:
             logger.error(f"❌ Error inicializando cliente de Azure OpenAI: {e}")
             self.openai_client = None
-    
+
     def is_initialized(self) -> bool:
         """
         Verifica si el bot está correctamente inicializado
