@@ -5,6 +5,7 @@ import logging
 from fastapi import FastAPI, Request, HTTPException, status
 from fastapi.responses import JSONResponse
 from botbuilder.core import BotFrameworkAdapter, BotFrameworkAdapterSettings
+from botbuilder.core.authentication import AppType
 from botbuilder.schema import Activity
 from pydantic import BaseModel
 from bot import TeamsOpenAIBot
@@ -24,10 +25,12 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configuración del Bot Framework Adapter
+# Configuración del Bot Framework Adapter para UserAssignedMSI
 bot_settings = BotFrameworkAdapterSettings(
     app_id=BOT_APP_ID,
-    app_password=BOT_APP_PASSWORD
+    app_password=BOT_APP_PASSWORD,
+    app_type=AppType.UserAssignedMSI,
+    app_tenent_id="b635abac-3d71-42e5-9e87-46b8c879f099"
 )
 adapter = BotFrameworkAdapter(bot_settings)
 
@@ -118,7 +121,7 @@ if __name__ == "__main__":
     
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(
-        "main:app",
+        "app:app",  # Cambiado de "main:app" a "app:app"
         host="0.0.0.0",
         port=port,
         log_level="info",
