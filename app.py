@@ -5,7 +5,6 @@ import logging
 from fastapi import FastAPI, Request, HTTPException, status
 from fastapi.responses import JSONResponse
 from botbuilder.core import BotFrameworkAdapter, BotFrameworkAdapterSettings
-from botbuilder.core.authentication import AppType
 from botbuilder.schema import Activity
 from pydantic import BaseModel
 from bot import TeamsOpenAIBot
@@ -28,9 +27,12 @@ app = FastAPI(
 # Configuración del Bot Framework Adapter para UserAssignedMSI
 bot_settings = BotFrameworkAdapterSettings(
     app_id=BOT_APP_ID,
-    app_password=BOT_APP_PASSWORD,
-    app_type=AppType.UserAssignedMSI,
-    app_tenent_id="b635abac-3d71-42e5-9e87-46b8c879f099"
+    app_password="",  # Vacío para Managed Identity
+    auth_configuration={
+        "MicrosoftAppType": "UserAssignedMSI",
+        "MicrosoftAppId": BOT_APP_ID,
+        "MicrosoftAppTenantId": "b635abac-3d71-42e5-9e87-46b8c879f099"
+    }
 )
 adapter = BotFrameworkAdapter(bot_settings)
 
