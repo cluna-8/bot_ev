@@ -1,0 +1,24 @@
+# FastAPI y servidor ASGI
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Bot Framework
+botbuilder-core==4.15.0
+botbuilder-schema==4.15.0
+
+# Azure OpenAI y autenticación
+openai==1.35.1
+azure-identity==1.15.0
+
+# Utilidades
+python-dotenv==1.0.1
+pydantic==2.5.0
+
+# HTTP client (requerido por Bot Framework)
+aiohttp==3.9.5
+
+# Logging y validación
+typing-extensions==4.8.0
+
+# Servidor de producción alternativo
+gunicorn==23.0.0
