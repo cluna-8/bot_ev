@@ -23,47 +23,14 @@ class TeamsOpenAIBot(ActivityHandler):
     
     def __init__(self):
         super().__init__()
-        self.openai_client = None
-        self.credential = None
-        self._setup_openai_client()
+        logger.info("✅ Bot inicializado correctamente")
     
-    def _setup_openai_client(self):
-        """Configura el cliente de Azure OpenAI"""
-        try:
-            # Crear credential con user-assigned managed identity
-            credential = DefaultAzureCredential(
-                managed_identity_client_id="a5787cf8-15b6-4980-ba9d-2b9b76884a3a"
-            )
-            
-            # Obtener token inicial (como en el endpoint que funciona)
-            token = credential.get_token("https://cognitiveservices.azure.com/.default")
-            
-            # Crear cliente de OpenAI con token fijo
-            self.openai_client = AsyncAzureOpenAI(
-                azure_endpoint=AZURE_OPENAI_ENDPOINT,
-                api_version=AZURE_OPENAI_API_VERSION,
-                azure_ad_token_provider=lambda: token.token,
-                default_headers={"User-Agent": "Teams-Bot/1.0"}
-            )
-            
-            logger.info("✅ Cliente OpenAI configurado correctamente")
-            
-        except Exception as e:
-            logger.error(f"❌ Error configurando OpenAI: {e}")
-            self.openai_client = None
-
-
-
     def is_ready(self) -> bool:
-        """Verifica si el bot está listo"""
-        return self.openai_client is not None
+        """El bot siempre está listo (crea cliente bajo demanda)"""
+        return True
     
     async def on_message_activity(self, turn_context: TurnContext):
         """Procesa mensajes de texto"""
-        if not self.is_ready():
-            await turn_context.send_activity("❌ Servicio no disponible")
-            return
-        
         user_message = turn_context.activity.text.strip()
         user_name = turn_context.activity.from_property.name or "Usuario"
         
@@ -78,12 +45,28 @@ class TeamsOpenAIBot(ActivityHandler):
         await self._process_message(turn_context, user_message, user_name)
     
     async def _process_message(self, turn_context: TurnContext, message: str, user_name: str):
-        """Procesa el mensaje con OpenAI"""
+        """Procesa el mensaje con OpenAI (crea cliente cada vez)"""
         try:
             await turn_context.send_activity("🤔 Procesando...")
             
+            # Usar exactamente la misma lógica que funciona en el endpoint
+            credential = DefaultAzureCredential(
+                managed_identity_client_id="a5787cf8-15b6-4980-ba9d-2b9b76884a3a"
+            )
+            
+            # Obtener token
+            token = credential.get_token("https://cognitiveservices.azure.com/.default")
+            
+            # Crear cliente (como en el endpoint que funciona)
+            client = AsyncAzureOpenAI(
+                azure_endpoint=AZURE_OPENAI_ENDPOINT,
+                api_version=AZURE_OPENAI_API_VERSION,
+                azure_ad_token_provider=lambda: token.token,
+                default_headers={"User-Agent": "Teams-Bot/1.0"}
+            )
+            
             # Llamar a OpenAI
-            response = await self.openai_client.chat.completions.create(
+            response = await client.chat.completions.create(
                 model=AZURE_OPENAI_DEPLOYMENT_NAME,
                 messages=[
                     {"role": "system", "content": SYSTEM_PROMPT},
@@ -103,7 +86,8 @@ class TeamsOpenAIBot(ActivityHandler):
             
         except Exception as e:
             logger.error(f"❌ Error procesando mensaje: {e}")
-            await turn_context.send_activity("😔 No pude procesar tu consulta")
+            logger.error(f"❌ Tipo: {type(e).__name__}")
+            await turn_context.send_activity("😔 No pude procesar tu consulta. Intenta de nuevo.")
     
     async def on_members_added_activity(self, members_added: List[ChannelAccount], turn_context: TurnContext):
         """Saluda a nuevos miembros"""
