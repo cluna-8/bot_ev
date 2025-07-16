@@ -20,13 +20,15 @@ app = FastAPI(
     version="2.0.0"
 )
 
-# Configurar Bot Framework Adapter
-adapter = BotFrameworkAdapter(
-    BotFrameworkAdapterSettings(
-        app_id=BOT_APP_ID,
-        app_password=BOT_APP_PASSWORD
-    )
+# Configurar Bot Framework Adapter para User-Assigned MSI
+bot_settings = BotFrameworkAdapterSettings(
+    app_id=BOT_APP_ID,
+    app_password=BOT_APP_PASSWORD,
+    app_type="UserAssignedMSI",
+    tenant_id="b635abac-3d71-42e5-9e87-46b8c879f099"
 )
+
+adapter = BotFrameworkAdapter(bot_settings)
 
 # Crear instancia del bot
 bot = TeamsOpenAIBot()
