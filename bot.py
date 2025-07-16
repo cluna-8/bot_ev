@@ -31,19 +31,18 @@ class TeamsOpenAIBot(ActivityHandler):
         """Configura el cliente de Azure OpenAI"""
         try:
             # Crear credential con user-assigned managed identity
-            self.credential = DefaultAzureCredential(
+            credential = DefaultAzureCredential(
                 managed_identity_client_id="a5787cf8-15b6-4980-ba9d-2b9b76884a3a"
             )
             
-            # Crear una función separada para obtener tokens
-            def get_token():
-                return self.credential.get_token("https://cognitiveservices.azure.com/.default").token
+            # Obtener token inicial (como en el endpoint que funciona)
+            token = credential.get_token("https://cognitiveservices.azure.com/.default")
             
-            # Crear cliente de OpenAI
+            # Crear cliente de OpenAI con token fijo
             self.openai_client = AsyncAzureOpenAI(
                 azure_endpoint=AZURE_OPENAI_ENDPOINT,
                 api_version=AZURE_OPENAI_API_VERSION,
-                azure_ad_token_provider=get_token,
+                azure_ad_token_provider=lambda: token.token,
                 default_headers={"User-Agent": "Teams-Bot/1.0"}
             )
             
@@ -52,7 +51,9 @@ class TeamsOpenAIBot(ActivityHandler):
         except Exception as e:
             logger.error(f"❌ Error configurando OpenAI: {e}")
             self.openai_client = None
-    
+
+
+
     def is_ready(self) -> bool:
         """Verifica si el bot está listo"""
         return self.openai_client is not None
