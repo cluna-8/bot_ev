@@ -49,6 +49,9 @@ async def root():
         "version": "1.0.0"
     }
 
+
+
+
 @app.get("/test-connection")
 async def test_connection():
     """Test de conexión a Azure OpenAI"""
@@ -104,6 +107,16 @@ async def test_connection():
             "error": str(e),
             "type": type(e).__name__
         }
+
+@app.get("/test-bot-init")
+async def test_bot_init():
+    """Test específico de inicialización del bot"""
+    return {
+        "bot_initialized": bot.is_initialized(),
+        "client_available": bot.openai_client is not None
+    }
+
+
 
 @app.get("/health")
 async def health_check():
