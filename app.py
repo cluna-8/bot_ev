@@ -49,6 +49,49 @@ async def root():
         "version": "1.0.0"
     }
 
+@app.get("/test-connection")
+async def test_connection():
+    """Test de conexión a Azure OpenAI"""
+    try:
+        from azure.identity import DefaultAzureCredential
+        from openai import AsyncAzureOpenAI
+        from config import AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_API_VERSION, AZURE_OPENAI_DEPLOYMENT_NAME
+        
+        result = {}
+        
+        # Paso 1: Verificar variables de entorno
+        result["config"] = {
+            "endpoint": AZURE_OPENAI_ENDPOINT,
+            "api_version": AZURE_OPENAI_API_VERSION,
+            "deployment": AZURE_OPENAI_DEPLOYMENT_NAME
+        }
+        
+        # Paso 2: Probar obtener token
+        credential = DefaultAzureCredential()
+        token = credential.get_token("https://cognitiveservices.azure.com/.default")
+        result["token"] = {
+            "obtained": True,
+            "expires_on": str(token.expires_on)
+        }
+        
+        # Paso 3: Probar crear cliente
+        client = AsyncAzureOpenAI(
+            azure_endpoint=AZURE_OPENAI_ENDPOINT,
+            api_version=AZURE_OPENAI_API_VERSION,
+            azure_ad_token_provider=lambda: token.token,
+            default_headers={"User-Agent": "Teams-Bot/1.0"}
+        )
+        result["client"] = {"created": True}
+        
+        return {"status": "success", "details": result}
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": str(e),
+            "type": type(e).__name__
+        }
+
 @app.get("/health")
 async def health_check():
     """Endpoint de health check"""
