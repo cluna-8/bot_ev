@@ -20,12 +20,10 @@ app = FastAPI(
     version="2.0.0"
 )
 
-# Configurar Bot Framework Adapter para User-Assigned MSI
+# Configurar Bot Framework Adapter (sin app_type)
 bot_settings = BotFrameworkAdapterSettings(
     app_id=BOT_APP_ID,
-    app_password=BOT_APP_PASSWORD,
-    app_type="UserAssignedMSI",
-    tenant_id="b635abac-3d71-42e5-9e87-46b8c879f099"
+    app_password=BOT_APP_PASSWORD
 )
 
 adapter = BotFrameworkAdapter(bot_settings)
@@ -87,8 +85,3 @@ async def global_exception_handler(request: Request, exc: Exception):
         status_code=500,
         content={"error": "Error interno del servidor"}
     )
-
-# Para desarrollo local
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("app:app", host="0.0.0.0", port=8000, log_level="info")
