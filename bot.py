@@ -38,11 +38,23 @@ class TeamsOpenAIBot(ActivityHandler):
                 managed_identity_client_id="a5787cf8-15b6-4980-ba9d-2b9b76884a3a"
             )
             
+            # Probar obtener token directamente para debug
+            try:
+                token = credential.get_token("https://cognitiveservices.azure.com/.default")
+                logger.info(f"✅ Token obtenido correctamente, expira en: {token.expires_on}")
+            except Exception as token_error:
+                logger.error(f"❌ Error obteniendo token: {token_error}")
+                raise
+            
             # Función para obtener token que se refresca automáticamente
             def get_azure_ad_token():
-                token = credential.get_token("https://cognitiveservices.azure.com/.default")
-                return token.token
-
+                try:
+                    token = credential.get_token("https://cognitiveservices.azure.com/.default")
+                    return token.token
+                except Exception as e:
+                    logger.error(f"❌ Error en get_azure_ad_token: {e}")
+                    raise
+            
             # Crear cliente async de Azure OpenAI con token provider
             self.openai_client = AsyncAzureOpenAI(
                 azure_endpoint=AZURE_OPENAI_ENDPOINT,
@@ -55,6 +67,8 @@ class TeamsOpenAIBot(ActivityHandler):
             
         except Exception as e:
             logger.error(f"❌ Error inicializando cliente de Azure OpenAI: {e}")
+            logger.error(f"❌ Tipo de error: {type(e).__name__}")
+            logger.error(f"❌ Detalles del error: {str(e)}")
             self.openai_client = None
 
     def is_initialized(self) -> bool:
