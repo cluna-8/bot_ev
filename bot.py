@@ -4,7 +4,7 @@ Bot Handler para Teams con Azure OpenAI
 import logging
 from typing import List
 from botbuilder.core import ActivityHandler, TurnContext
-from botbuilder.schema import ChannelAccount, ActivityTypes
+from botbuilder.schema import ChannelAccount
 from openai import AsyncAzureOpenAI
 from azure.identity import DefaultAzureCredential
 from config import (
@@ -19,196 +19,88 @@ from config import (
 logger = logging.getLogger(__name__)
 
 class TeamsOpenAIBot(ActivityHandler):
-    """
-    Bot que maneja mensajes de Teams y los procesa con Azure OpenAI
-    """
+    """Bot que procesa mensajes de Teams con Azure OpenAI"""
     
     def __init__(self):
         super().__init__()
         self.openai_client = None
-        self._initialize_openai_client()
-        
-    def _initialize_openai_client(self):
-        """
-        Inicializa el cliente de Azure OpenAI usando User-Assigned Managed Identity
-        """
+        self._setup_openai_client()
+    
+    def _setup_openai_client(self):
+        """Configura el cliente de Azure OpenAI"""
         try:
-            # Usar específicamente la user-assigned managed identity
+            # Crear credential con user-assigned managed identity
             credential = DefaultAzureCredential(
                 managed_identity_client_id="a5787cf8-15b6-4980-ba9d-2b9b76884a3a"
             )
             
-            # Probar obtener token directamente para debug
-            try:
-                token = credential.get_token("https://cognitiveservices.azure.com/.default")
-                logger.info(f"✅ Token obtenido correctamente, expira en: {token.expires_on}")
-            except Exception as token_error:
-                logger.error(f"❌ Error obteniendo token: {token_error}")
-                raise
-            
-            # Función para obtener token que se refresca automáticamente
-            def get_azure_ad_token():
-                try:
-                    token = credential.get_token("https://cognitiveservices.azure.com/.default")
-                    return token.token
-                except Exception as e:
-                    logger.error(f"❌ Error en get_azure_ad_token: {e}")
-                    raise
-            
-            # Crear cliente async de Azure OpenAI con token provider
+            # Crear cliente de OpenAI
             self.openai_client = AsyncAzureOpenAI(
                 azure_endpoint=AZURE_OPENAI_ENDPOINT,
                 api_version=AZURE_OPENAI_API_VERSION,
-                azure_ad_token_provider=get_azure_ad_token,
+                azure_ad_token_provider=lambda: credential.get_token("https://cognitiveservices.azure.com/.default").token,
                 default_headers={"User-Agent": "Teams-Bot/1.0"}
             )
             
-            logger.info("✅ Cliente de Azure OpenAI inicializado correctamente")
+            logger.info("✅ Cliente OpenAI configurado correctamente")
             
         except Exception as e:
-            logger.error(f"❌ Error inicializando cliente de Azure OpenAI: {e}")
-            logger.error(f"❌ Tipo de error: {type(e).__name__}")
-            logger.error(f"❌ Detalles del error: {str(e)}")
+            logger.error(f"❌ Error configurando OpenAI: {e}")
             self.openai_client = None
-
-    def is_initialized(self) -> bool:
-        """
-        Verifica si el bot está correctamente inicializado
-        """
+    
+    def is_ready(self) -> bool:
+        """Verifica si el bot está listo"""
         return self.openai_client is not None
     
     async def on_message_activity(self, turn_context: TurnContext):
-        """
-        Se ejecuta cuando el bot recibe un mensaje de texto
-        """
+        """Procesa mensajes de texto"""
+        if not self.is_ready():
+            await turn_context.send_activity("❌ Servicio no disponible")
+            return
+        
         user_message = turn_context.activity.text.strip()
         user_name = turn_context.activity.from_property.name or "Usuario"
         
-        logger.info(f"👤 Mensaje de {user_name}: {user_message}")
-        
-        # Verificar si el cliente está inicializado
-        if not self.openai_client:
-            await turn_context.send_activity(
-                "❌ Lo siento, el servicio de IA no está disponible en este momento. "
-                "Por favor, contacta al administrador del sistema."
-            )
-            return
+        logger.info(f"👤 {user_name}: {user_message}")
         
         # Respuesta rápida para saludos
-        if user_message.lower() in ["hola", "hi", "hello", "buenos días", "buenas tardes"]:
-            await turn_context.send_activity(
-                f"¡Hola {user_name}! 👋 Soy tu asistente interno de IA. "
-                "¿En qué puedo ayudarte hoy?"
-            )
+        if user_message.lower() in ["hola", "hi", "hello"]:
+            await turn_context.send_activity(f"¡Hola {user_name}! 👋 ¿En qué puedo ayudarte?")
             return
         
-        # Comando de ayuda
-        if user_message.lower() in ["ayuda", "help", "?"]:
-            await self._send_help_message(turn_context)
-            return
-        
-        # Procesar mensaje con Azure OpenAI
-        if user_message:
-            await self._process_with_openai(turn_context, user_message, user_name)
+        # Procesar con OpenAI
+        await self._process_message(turn_context, user_message, user_name)
     
-    async def _process_with_openai(self, turn_context: TurnContext, user_message: str, user_name: str):
-        """
-        Procesa el mensaje del usuario con Azure OpenAI
-        """
+    async def _process_message(self, turn_context: TurnContext, message: str, user_name: str):
+        """Procesa el mensaje con OpenAI"""
         try:
-            # Enviar indicador de que el bot está "escribiendo"
-            await turn_context.send_activity("🤔 Procesando tu consulta...")
+            await turn_context.send_activity("🤔 Procesando...")
             
-            # Preparar mensajes para la API usando el prompt del config
-            messages = [
-                {
-                    "role": "system",
-                    "content": SYSTEM_PROMPT
-                },
-                {
-                    "role": "user",
-                    "content": f"Usuario: {user_name}\nConsulta: {user_message}"
-                }
-            ]
-            
-            # Llamar a Azure OpenAI
+            # Llamar a OpenAI
             response = await self.openai_client.chat.completions.create(
                 model=AZURE_OPENAI_DEPLOYMENT_NAME,
-                messages=messages,
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": f"Usuario: {user_name}\nConsulta: {message}"}
+                ],
                 max_tokens=MAX_TOKENS,
-                temperature=TEMPERATURE,
-                top_p=0.95,
-                frequency_penalty=0.0,
-                presence_penalty=0.0
+                temperature=TEMPERATURE
             )
             
-            # Extraer la respuesta
+            # Enviar respuesta
             ai_response = response.choices[0].message.content
-            
-            # Log del uso de tokens (para monitoreo de costos)
-            usage = response.usage
-            logger.info(
-                f"💰 Uso de tokens - Prompt: {usage.prompt_tokens}, "
-                f"Completion: {usage.completion_tokens}, "
-                f"Total: {usage.total_tokens}"
-            )
-            
-            # Enviar respuesta al usuario
             await turn_context.send_activity(ai_response)
             
+            # Log de tokens
+            usage = response.usage
+            logger.info(f"💰 Tokens: {usage.total_tokens}")
+            
         except Exception as e:
-            logger.error(f"❌ Error procesando con OpenAI: {e}")
-            await turn_context.send_activity(
-                "😔 Lo siento, no pude procesar tu consulta en este momento. "
-                "Por favor, inténtalo de nuevo más tarde o contacta al equipo de soporte."
-            )
+            logger.error(f"❌ Error procesando mensaje: {e}")
+            await turn_context.send_activity("😔 No pude procesar tu consulta")
     
-    async def _send_help_message(self, turn_context: TurnContext):
-        """
-        Envía mensaje de ayuda al usuario
-        """
-        help_message = (
-            "🤖 **Asistente IA de Evidenze**\n\n"
-            "Puedo ayudarte con:\n"
-            "• Consultas generales sobre procesos de trabajo\n"
-            "• Preguntas técnicas\n"
-            "• Información sobre herramientas y sistemas\n"
-            "• Resolución de problemas comunes\n\n"
-            "💡 **Consejos:**\n"
-            "• Sé específico en tus preguntas\n"
-            "• Incluye contexto relevante\n"
-            "• Pregunta una cosa a la vez\n\n"
-            "📧 Para soporte técnico avanzado, contacta al equipo de IT."
-        )
-        
-        await turn_context.send_activity(help_message)
-    
-    async def on_members_added_activity(
-        self, 
-        members_added: List[ChannelAccount], 
-        turn_context: TurnContext
-    ):
-        """
-        Se ejecuta cuando se agregan nuevos miembros al chat
-        """
+    async def on_members_added_activity(self, members_added: List[ChannelAccount], turn_context: TurnContext):
+        """Saluda a nuevos miembros"""
         for member in members_added:
-            # No saludar al mismo bot
             if member.id != turn_context.activity.recipient.id:
-                welcome_message = (
-                    f"¡Bienvenido al asistente IA de Evidenze, {member.name}! 👋\n\n"
-                    "🤖 Soy tu asistente interno de inteligencia artificial. "
-                    "Estoy aquí para ayudarte con consultas relacionadas con el trabajo, "
-                    "procesos internos y preguntas técnicas generales.\n\n"
-                    "💡 Escribe 'ayuda' para ver qué puedo hacer por ti."
-                )
-                
-                await turn_context.send_activity(welcome_message)
-    
-    async def on_activity(self, turn_context: TurnContext):
-        """
-        Maneja todos los tipos de actividad
-        """
-        logger.info(f"📨 Actividad recibida: {turn_context.activity.type}")
-        
-        # Llamar al handler padre
-        await super().on_activity(turn_context)
+                await turn_context.send_activity(f"¡Bienvenido {member.name}! 👋 Soy el asistente IA de Evidenze.")
