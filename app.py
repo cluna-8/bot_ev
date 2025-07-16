@@ -83,6 +83,17 @@ async def test_connection():
         )
         result["client"] = {"created": True}
         
+        # Paso 4: Probar llamada real a Azure OpenAI
+        response = await client.chat.completions.create(
+            model=AZURE_OPENAI_DEPLOYMENT_NAME,
+            messages=[{"role": "user", "content": "Test"}],
+            max_tokens=50
+        )
+        result["api_call"] = {
+            "success": True,
+            "response": response.choices[0].message.content
+        }
+        
         return {"status": "success", "details": result}
         
     except Exception as e:
