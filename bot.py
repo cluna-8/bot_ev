@@ -10,7 +10,10 @@ from azure.identity import DefaultAzureCredential
 from config import (
     AZURE_OPENAI_ENDPOINT,
     AZURE_OPENAI_API_VERSION,
-    AZURE_OPENAI_DEPLOYMENT_NAME
+    AZURE_OPENAI_DEPLOYMENT_NAME,
+    SYSTEM_PROMPT,
+    MAX_TOKENS,
+    TEMPERATURE
 )
 
 logger = logging.getLogger(__name__)
@@ -27,11 +30,13 @@ class TeamsOpenAIBot(ActivityHandler):
         
     def _initialize_openai_client(self):
         """
-        Inicializa el cliente de Azure OpenAI usando Managed Identity
+        Inicializa el cliente de Azure OpenAI usando User-Assigned Managed Identity
         """
         try:
-            # Crear credential usando Managed Identity
-            credential = DefaultAzureCredential()
+            # Usar específicamente la user-assigned managed identity
+            credential = DefaultAzureCredential(
+                managed_identity_client_id="a5787cf8-15b6-4980-ba9d-2b9b76884a3a"
+            )
             
             # Función para obtener token que se refresca automáticamente
             def get_azure_ad_token():
@@ -44,7 +49,7 @@ class TeamsOpenAIBot(ActivityHandler):
                 api_version=AZURE_OPENAI_API_VERSION,
                 azure_ad_token_provider=get_azure_ad_token,
                 default_headers={"User-Agent": "Teams-Bot/1.0"}
-)
+            )
             
             logger.info("✅ Cliente de Azure OpenAI inicializado correctamente")
             
@@ -100,18 +105,11 @@ class TeamsOpenAIBot(ActivityHandler):
             # Enviar indicador de que el bot está "escribiendo"
             await turn_context.send_activity("🤔 Procesando tu consulta...")
             
-            # Preparar mensajes para la API
+            # Preparar mensajes para la API usando el prompt del config
             messages = [
                 {
                     "role": "system",
-                    "content": (
-                        "Eres un asistente interno de la empresa Evidenze, amable, útil y profesional. "
-                        "Tu objetivo es ayudar a los empleados con consultas relacionadas con el trabajo, "
-                        "procesos internos, preguntas técnicas generales y tareas corporativas. "
-                        "Mantén tus respuestas concisas pero completas. "
-                        "Si no puedes ayudar con algo específico, explica por qué y sugiere alternativas. "
-                        "Usa emojis ocasionalmente para hacer la conversación más amigable."
-                    )
+                    "content": SYSTEM_PROMPT
                 },
                 {
                     "role": "user",
@@ -123,8 +121,8 @@ class TeamsOpenAIBot(ActivityHandler):
             response = await self.openai_client.chat.completions.create(
                 model=AZURE_OPENAI_DEPLOYMENT_NAME,
                 messages=messages,
-                max_tokens=500,  # Límite de tokens para la respuesta
-                temperature=0.7,  # Creatividad moderada
+                max_tokens=MAX_TOKENS,
+                temperature=TEMPERATURE,
                 top_p=0.95,
                 frequency_penalty=0.0,
                 presence_penalty=0.0

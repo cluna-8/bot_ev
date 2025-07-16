@@ -66,8 +66,10 @@ async def test_connection():
             "deployment": AZURE_OPENAI_DEPLOYMENT_NAME
         }
         
-        # Paso 2: Probar obtener token
-        credential = DefaultAzureCredential()
+        # Paso 2: Probar obtener token con user-assigned managed identity
+        credential = DefaultAzureCredential(
+            managed_identity_client_id="a5787cf8-15b6-4980-ba9d-2b9b76884a3a"
+        )
         token = credential.get_token("https://cognitiveservices.azure.com/.default")
         result["token"] = {
             "obtained": True,
