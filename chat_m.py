@@ -31,11 +31,7 @@ HTML_TEMPLATE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        * { 
-            margin: 0; 
-            padding: 0; 
-            box-sizing: border-box; 
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body { 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -63,17 +59,12 @@ HTML_TEMPLATE = """
             color: white;
             padding: 25px 30px;
             text-align: center;
-            position: relative;
         }
         
         .logo {
             font-size: 24px;
             font-weight: bold;
             margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
             letter-spacing: 0.5px;
         }
         
@@ -99,6 +90,36 @@ HTML_TEMPLATE = """
             margin-top: 8px;
         }
         
+        .controls {
+            background: white;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .message-count {
+            color: #64748b;
+            font-size: 12px;
+        }
+        
+        .clear-btn {
+            background: transparent;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .clear-btn:hover {
+            background: #fee2e2;
+            color: #dc2626;
+            border-color: #fecaca;
+        }
+        
         .chat-container { 
             height: 450px; 
             overflow-y: auto; 
@@ -109,24 +130,10 @@ HTML_TEMPLATE = """
             gap: 15px;
         }
         
-        .chat-container::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        .chat-container::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        
-        .chat-container::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 3px;
-        }
-        
         .message { 
             padding: 15px 18px;
             border-radius: 18px;
             max-width: 80%;
-            position: relative;
             animation: fadeInUp 0.3s ease;
         }
         
@@ -155,29 +162,24 @@ HTML_TEMPLATE = """
         .input-section {
             background: white;
             padding: 20px;
-            border-top: 1px solid #e2e8f0;
         }
         
         .input-container { 
             display: flex; 
             gap: 12px;
-            align-items: end;
+            align-items: center;
         }
         
-        .input-container textarea { 
+        .input-container input { 
             flex: 1; 
             padding: 15px 18px;
             border: 2px solid #e2e8f0;
             border-radius: 12px;
             font-size: 14px;
-            resize: none;
-            min-height: 50px;
-            max-height: 120px;
             font-family: inherit;
-            transition: border-color 0.2s ease;
         }
         
-        .input-container textarea:focus {
+        .input-container input:focus {
             outline: none;
             border-color: #2563eb;
         }
@@ -190,7 +192,6 @@ HTML_TEMPLATE = """
             padding: 15px 24px;
             cursor: pointer;
             font-weight: 600;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
             min-width: 80px;
         }
         
@@ -199,83 +200,17 @@ HTML_TEMPLATE = """
             box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
         }
         
-        .send-btn:disabled {
-            background: #94a3b8;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        
-        .controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        
-        .clear-btn {
-            background: transparent;
-            color: #64748b;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 8px 12px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: all 0.2s ease;
-        }
-        
-        .clear-btn:hover {
-            background: #fee2e2;
-            color: #dc2626;
-            border-color: #fecaca;
-        }
-        
-        .message-count {
-            color: #64748b;
-            font-size: 12px;
-        }
-        
         .loading { 
             text-align: center; 
             color: #64748b;
             font-style: italic;
             padding: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
         }
         
-        .loading::before {
-            content: '';
-            width: 16px;
-            height: 16px;
-            border: 2px solid #e2e8f0;
-            border-top: 2px solid #2563eb;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .error-message {
-            background: #fef2f2;
-            color: #dc2626;
-            border: 1px solid #fecaca;
-        }
-        
-        /* Responsive */
         @media (max-width: 768px) {
             body { padding: 10px; }
-            .chat-wrapper { border-radius: 15px; }
-            .header { padding: 20px; }
-            .logo { font-size: 20px; }
-            .chat-container { height: 350px; padding: 15px; }
+            .chat-container { height: 350px; }
             .message { max-width: 90%; }
-            .input-section { padding: 15px; }
         }
     </style>
 </head>
@@ -283,7 +218,9 @@ HTML_TEMPLATE = """
     <div class="chat-wrapper">
         <div class="header">
             <div class="logo">
-                <img src="https://evidenze.com/assets/front/img/logos/logoEvidenze_blanco.png" alt="Evidenze" onerror="this.style.display='none'; this.parentElement.innerHTML='EVIDENZE AI';">
+                <img src="https://evidenze.com/assets/front/img/logos/logoEvidenze_blanco.png" 
+                     alt="Evidenze" 
+                     onerror="this.style.display='none'; this.parentElement.innerHTML='EVIDENZE AI';">
             </div>
             <div class="tagline">
                 Bot prueba con seguridad GDPR Evidenze
@@ -293,15 +230,13 @@ HTML_TEMPLATE = """
             </div>
         </div>
         
-        <div class="input-section">
-            <div class="controls">
-                <div class="message-count">
-                    <span id="message-count">0</span> mensajes en esta sesión
-                </div>
-                <button class="clear-btn" onclick="clearConversation()">
-                    ↻ Limpiar historial
-                </button>
+        <div class="controls">
+            <div class="message-count">
+                <span id="message-count">0</span> mensajes en esta sesión
             </div>
+            <button class="clear-btn" onclick="clearConversation()">
+                ↻ Limpiar historial
+            </button>
         </div>
         
         <div id="chat-container" class="chat-container">
@@ -315,45 +250,30 @@ HTML_TEMPLATE = """
         
         <div class="input-section">
             <div class="input-container">
-                <textarea id="message-input" 
-                         placeholder="Escribe tu mensaje aquí..." 
-                         rows="1"></textarea>
-                <button id="send-btn" class="send-btn" onclick="sendMessage()">
-                    Enviar
-                </button>
+                <input type="text" id="message-input" placeholder="Escribe tu mensaje aquí..." onkeypress="handleKeyPress(event)">
+                <button class="send-btn" onclick="sendMessage()">Enviar</button>
             </div>
         </div>
     </div>
 
-    <script type="text/javascript">
-        // Variables globales
-        var conversationHistory = [
+    <script>
+        // Memoria de conversación (igual que la versión que funcionaba, pero con historial)
+        let conversationHistory = [
             {
                 "role": "system",
                 "content": "Eres un asistente de IA profesional de Evidenze, una empresa CRO especializada en investigación clínica y servicios farmacéuticos. Proporciona respuestas útiles, profesionales y precisas."
             }
         ];
         
-        var messageCount = 0;
-        
-        // Función principal para enviar mensaje
-        function sendMessage() {
-            var input = document.getElementById('message-input');
-            var sendBtn = document.getElementById('send-btn');
-            var message = input.value.trim();
+        async function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
             
             if (!message) return;
             
-            console.log('Enviando mensaje:', message);
-            
-            // Deshabilitar input
-            sendBtn.disabled = true;
-            sendBtn.textContent = 'Enviando...';
-            
-            // Mostrar mensaje del usuario
+            // Mostrar mensaje del usuario (igual que antes)
             addMessage(message, 'user-message');
             input.value = '';
-            input.style.height = 'auto';
             
             // Agregar al historial
             conversationHistory.push({
@@ -363,33 +283,21 @@ HTML_TEMPLATE = """
             
             updateMessageCount();
             
-            // Mostrar indicador de carga
-            var loadingDiv = document.createElement('div');
+            // Mostrar indicador de carga (igual que antes)
+            const loadingDiv = document.createElement('div');
             loadingDiv.className = 'loading';
             loadingDiv.textContent = 'Procesando tu consulta...';
             document.getElementById('chat-container').appendChild(loadingDiv);
-            scrollToBottom();
             
-            // Enviar request
-            fetch('/chat', {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({ 
-                    messages: conversationHistory 
-                })
-            })
-            .then(function(response) {
-                console.log('Response status:', response.status);
-                if (!response.ok) {
-                    throw new Error('HTTP error! status: ' + response.status);
-                }
-                return response.json();
-            })
-            .then(function(data) {
-                console.log('Response data:', data);
+            try {
+                // Enviar historial completo al backend (en lugar de solo el mensaje)
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messages: conversationHistory })
+                });
+                
+                const data = await response.json();
                 
                 // Remover indicador de carga
                 loadingDiv.remove();
@@ -403,99 +311,51 @@ HTML_TEMPLATE = """
                         "content": data.response
                     });
                 } else {
-                    addMessage('Error: No se pudo procesar tu mensaje', 'bot-message error-message');
+                    addMessage('Error: No se pudo procesar tu mensaje', 'bot-message');
                 }
-            })
-            .catch(function(error) {
-                console.error('Error:', error);
+            } catch (error) {
                 loadingDiv.remove();
-                addMessage('Error: Problema de conexión con el servidor', 'bot-message error-message');
-            })
-            .finally(function() {
-                // Reactivar input
-                sendBtn.disabled = false;
-                sendBtn.textContent = 'Enviar';
-                input.focus();
-            });
+                addMessage('Error: Problema de conexión', 'bot-message');
+            }
         }
         
-        // Función para agregar mensaje
         function addMessage(text, className) {
-            var chatContainer = document.getElementById('chat-container');
-            var messageDiv = document.createElement('div');
-            messageDiv.className = 'message ' + className;
-            messageDiv.innerHTML = text.split('\n').join('<br>');
+            const chatContainer = document.getElementById('chat-container');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${className}`;
+            messageDiv.innerHTML = text.replace(/\n/g, '<br>');
             chatContainer.appendChild(messageDiv);
-            scrollToBottom();
-        }
-        
-        // Función para scroll
-        function scrollToBottom() {
-            var chatContainer = document.getElementById('chat-container');
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
         
-        // Función para actualizar contador
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+        
         function updateMessageCount() {
-            var userMessages = conversationHistory.filter(function(msg) {
-                return msg.role === 'user';
-            }).length;
+            const userMessages = conversationHistory.filter(msg => msg.role === 'user').length;
             document.getElementById('message-count').textContent = userMessages;
         }
         
-        // Función para limpiar conversación
         function clearConversation() {
             if (confirm('¿Estás seguro de que quieres limpiar el historial de la conversación?')) {
-                conversationHistory = [conversationHistory[0]];
+                conversationHistory = [conversationHistory[0]]; // Mantener solo system prompt
                 
-                var chatContainer = document.getElementById('chat-container');
-                chatContainer.innerHTML = '<div class="message bot-message"><strong>Bienvenido al Asistente de IA de Evidenze</strong><br>Soy tu asistente inteligente especializado en investigación clínica y servicios farmacéuticos.<br>Puedo ayudarte con consultas profesionales y recordaré nuestra conversación durante esta sesión.<br>¿En qué puedo asistirte hoy?</div>';
+                const chatContainer = document.getElementById('chat-container');
+                chatContainer.innerHTML = `
+                    <div class="message bot-message">
+                        <strong>Bienvenido al Asistente de IA de Evidenze</strong><br>
+                        Soy tu asistente inteligente especializado en investigación clínica y servicios farmacéuticos.<br>
+                        Puedo ayudarte con consultas profesionales y recordaré nuestra conversación durante esta sesión.<br>
+                        ¿En qué puedo asistirte hoy?
+                    </div>
+                `;
                 
                 updateMessageCount();
             }
         }
-        
-        // Setup del textarea
-        function setupTextarea() {
-            var textarea = document.getElementById('message-input');
-            
-            // Auto-resize
-            textarea.addEventListener('input', function() {
-                this.style.height = 'auto';
-                this.style.height = this.scrollHeight + 'px';
-            });
-            
-            // Manejo de teclas (Enter para enviar, Shift+Enter para nueva línea)
-            textarea.addEventListener('keydown', function(event) {
-                if (event.key === 'Enter' && !event.shiftKey) {
-                    event.preventDefault();
-                    console.log('Enter presionado - enviando mensaje');
-                    sendMessage();
-                }
-            });
-        }
-        
-        // Inicialización cuando se carga la página
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM cargado, inicializando chatbot Evidenze...');
-            
-            // Setup del textarea (incluye manejo de teclas)
-            setupTextarea();
-            
-            // Focus inicial
-            var input = document.getElementById('message-input');
-            if (input) {
-                input.focus();
-            }
-            
-            // Event listener adicional para el botón
-            var sendBtn = document.getElementById('send-btn');
-            if (sendBtn) {
-                sendBtn.addEventListener('click', sendMessage);
-            }
-            
-            console.log('Chatbot inicializado correctamente');
-        });
     </script>
 </body>
 </html>
@@ -516,10 +376,6 @@ async def chat(request: Request):
         
         if not messages or len(messages) < 2:
             return JSONResponse({"error": "Historial de conversación inválido"}, status_code=400)
-        
-        # Validar que el último mensaje sea del usuario
-        if messages[-1]["role"] != "user":
-            return JSONResponse({"error": "El último mensaje debe ser del usuario"}, status_code=400)
         
         # Crear cliente OpenAI
         client = AsyncAzureOpenAI(
