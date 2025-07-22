@@ -317,7 +317,6 @@ HTML_TEMPLATE = """
             <div class="input-container">
                 <textarea id="message-input" 
                          placeholder="Escribe tu mensaje aquí..." 
-                         onkeydown="handleKeyDown(event)"
                          rows="1"></textarea>
                 <button id="send-btn" class="send-btn" onclick="sendMessage()">
                     Enviar
@@ -326,22 +325,22 @@ HTML_TEMPLATE = """
         </div>
     </div>
 
-    <script>
-        // Almacén de conversación en memoria de sesión
-        let conversationHistory = [
+    <script type="text/javascript">
+        // Variables globales
+        var conversationHistory = [
             {
                 "role": "system",
                 "content": "Eres un asistente de IA profesional de Evidenze, una empresa CRO especializada en investigación clínica y servicios farmacéuticos. Proporciona respuestas útiles, profesionales y precisas."
             }
         ];
         
-        let messageCount = 0;
+        var messageCount = 0;
         
-        // Función para enviar mensaje
-        async function sendMessage() {
-            const input = document.getElementById('message-input');
-            const sendBtn = document.getElementById('send-btn');
-            const message = input.value.trim();
+        // Función principal para enviar mensaje
+        function sendMessage() {
+            var input = document.getElementById('message-input');
+            var sendBtn = document.getElementById('send-btn');
+            var message = input.value.trim();
             
             if (!message) return;
             
@@ -365,34 +364,31 @@ HTML_TEMPLATE = """
             updateMessageCount();
             
             // Mostrar indicador de carga
-            const loadingDiv = document.createElement('div');
+            var loadingDiv = document.createElement('div');
             loadingDiv.className = 'loading';
             loadingDiv.textContent = 'Procesando tu consulta...';
             document.getElementById('chat-container').appendChild(loadingDiv);
             scrollToBottom();
             
-            try {
-                console.log('Enviando request a /chat');
-                
-                // Enviar historial completo al backend
-                const response = await fetch('/chat', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({ 
-                        messages: conversationHistory 
-                    })
-                });
-                
+            // Enviar request
+            fetch('/chat', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    messages: conversationHistory 
+                })
+            })
+            .then(function(response) {
                 console.log('Response status:', response.status);
-                
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error('HTTP error! status: ' + response.status);
                 }
-                
-                const data = await response.json();
+                return response.json();
+            })
+            .then(function(data) {
                 console.log('Response data:', data);
                 
                 // Remover indicador de carga
@@ -407,40 +403,43 @@ HTML_TEMPLATE = """
                         "content": data.response
                     });
                 } else {
-                    addMessage('❌ Error: No se pudo procesar tu mensaje', 'bot-message error-message');
+                    addMessage('Error: No se pudo procesar tu mensaje', 'bot-message error-message');
                 }
-                
-            } catch (error) {
+            })
+            .catch(function(error) {
                 console.error('Error:', error);
                 loadingDiv.remove();
-                addMessage('❌ Error: Problema de conexión con el servidor', 'bot-message error-message');
-            }
-            
-            // Reactivar input
-            sendBtn.disabled = false;
-            sendBtn.textContent = 'Enviar';
-            input.focus();
+                addMessage('Error: Problema de conexión con el servidor', 'bot-message error-message');
+            })
+            .finally(function() {
+                // Reactivar input
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Enviar';
+                input.focus();
+            });
         }
         
         // Función para agregar mensaje
         function addMessage(text, className) {
-            const chatContainer = document.getElementById('chat-container');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${className}`;
-            messageDiv.innerHTML = text.replace(/\n/g, '<br>');
+            var chatContainer = document.getElementById('chat-container');
+            var messageDiv = document.createElement('div');
+            messageDiv.className = 'message ' + className;
+            messageDiv.innerHTML = text.split('\n').join('<br>');
             chatContainer.appendChild(messageDiv);
             scrollToBottom();
         }
         
         // Función para scroll
         function scrollToBottom() {
-            const chatContainer = document.getElementById('chat-container');
+            var chatContainer = document.getElementById('chat-container');
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
         
         // Función para actualizar contador
         function updateMessageCount() {
-            const userMessages = conversationHistory.filter(msg => msg.role === 'user').length;
+            var userMessages = conversationHistory.filter(function(msg) {
+                return msg.role === 'user';
+            }).length;
             document.getElementById('message-count').textContent = userMessages;
         }
         
@@ -449,55 +448,54 @@ HTML_TEMPLATE = """
             if (confirm('¿Estás seguro de que quieres limpiar el historial de la conversación?')) {
                 conversationHistory = [conversationHistory[0]];
                 
-                const chatContainer = document.getElementById('chat-container');
-                chatContainer.innerHTML = `
-                    <div class="message bot-message">
-                        <strong>Bienvenido al Asistente de IA de Evidenze</strong><br>
-                        Soy tu asistente inteligente especializado en investigación clínica y servicios farmacéuticos.<br>
-                        Puedo ayudarte con consultas profesionales y recordaré nuestra conversación durante esta sesión.<br>
-                        ¿En qué puedo asistirte hoy?
-                    </div>
-                `;
+                var chatContainer = document.getElementById('chat-container');
+                chatContainer.innerHTML = '<div class="message bot-message"><strong>Bienvenido al Asistente de IA de Evidenze</strong><br>Soy tu asistente inteligente especializado en investigación clínica y servicios farmacéuticos.<br>Puedo ayudarte con consultas profesionales y recordaré nuestra conversación durante esta sesión.<br>¿En qué puedo asistirte hoy?</div>';
                 
                 updateMessageCount();
             }
         }
         
-        // Función para manejar teclas
-        function handleKeyDown(event) {
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault();
-                sendMessage();
-            }
-        }
-        
-        // Auto-resize del textarea
+        // Setup del textarea
         function setupTextarea() {
-            const textarea = document.getElementById('message-input');
+            var textarea = document.getElementById('message-input');
+            
+            // Auto-resize
             textarea.addEventListener('input', function() {
                 this.style.height = 'auto';
                 this.style.height = this.scrollHeight + 'px';
+            });
+            
+            // Manejo de teclas (Enter para enviar, Shift+Enter para nueva línea)
+            textarea.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault();
+                    console.log('Enter presionado - enviando mensaje');
+                    sendMessage();
+                }
             });
         }
         
         // Inicialización cuando se carga la página
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM cargado, inicializando...');
+            console.log('DOM cargado, inicializando chatbot Evidenze...');
             
-            // Setup del textarea
+            // Setup del textarea (incluye manejo de teclas)
             setupTextarea();
             
             // Focus inicial
-            document.getElementById('message-input').focus();
+            var input = document.getElementById('message-input');
+            if (input) {
+                input.focus();
+            }
             
-            // Event listener de respaldo para el botón
-            document.getElementById('send-btn').addEventListener('click', sendMessage);
+            // Event listener adicional para el botón
+            var sendBtn = document.getElementById('send-btn');
+            if (sendBtn) {
+                sendBtn.addEventListener('click', sendMessage);
+            }
+            
+            console.log('Chatbot inicializado correctamente');
         });
-        
-        // Hacer funciones globales (por si acaso)
-        window.sendMessage = sendMessage;
-        window.clearConversation = clearConversation;
-        window.handleKeyDown = handleKeyDown;
     </script>
 </body>
 </html>
