@@ -257,8 +257,8 @@ HTML_TEMPLATE = """
     </div>
 
     <script>
-        // Memoria de conversación (igual que la versión que funcionaba, pero con historial)
-        let conversationHistory = [
+        // Memoria de conversación - EXACTAMENTE como tu código que funcionaba, pero con historial
+        var conversationHistory = [
             {
                 "role": "system",
                 "content": "Eres un asistente de IA profesional de Evidenze, una empresa CRO especializada en investigación clínica y servicios farmacéuticos. Proporciona respuestas útiles, profesionales y precisas."
@@ -271,7 +271,7 @@ HTML_TEMPLATE = """
             
             if (!message) return;
             
-            // Mostrar mensaje del usuario (igual que antes)
+            // Mostrar mensaje del usuario (IGUAL que tu versión)
             addMessage(message, 'user-message');
             input.value = '';
             
@@ -283,14 +283,14 @@ HTML_TEMPLATE = """
             
             updateMessageCount();
             
-            // Mostrar indicador de carga (igual que antes)
+            // Mostrar indicador de carga (IGUAL que tu versión)
             const loadingDiv = document.createElement('div');
             loadingDiv.className = 'loading';
             loadingDiv.textContent = 'Procesando tu consulta...';
             document.getElementById('chat-container').appendChild(loadingDiv);
             
             try {
-                // Enviar historial completo al backend (en lugar de solo el mensaje)
+                // Enviar historial completo al backend
                 const response = await fetch('/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -322,8 +322,8 @@ HTML_TEMPLATE = """
         function addMessage(text, className) {
             const chatContainer = document.getElementById('chat-container');
             const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${className}`;
-            messageDiv.innerHTML = text.replace(/\n/g, '<br>');
+            messageDiv.className = 'message ' + className;
+            messageDiv.textContent = text;
             chatContainer.appendChild(messageDiv);
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
@@ -335,7 +335,12 @@ HTML_TEMPLATE = """
         }
         
         function updateMessageCount() {
-            const userMessages = conversationHistory.filter(msg => msg.role === 'user').length;
+            var userMessages = 0;
+            for (var i = 0; i < conversationHistory.length; i++) {
+                if (conversationHistory[i].role === 'user') {
+                    userMessages++;
+                }
+            }
             document.getElementById('message-count').textContent = userMessages;
         }
         
@@ -344,14 +349,7 @@ HTML_TEMPLATE = """
                 conversationHistory = [conversationHistory[0]]; // Mantener solo system prompt
                 
                 const chatContainer = document.getElementById('chat-container');
-                chatContainer.innerHTML = `
-                    <div class="message bot-message">
-                        <strong>Bienvenido al Asistente de IA de Evidenze</strong><br>
-                        Soy tu asistente inteligente especializado en investigación clínica y servicios farmacéuticos.<br>
-                        Puedo ayudarte con consultas profesionales y recordaré nuestra conversación durante esta sesión.<br>
-                        ¿En qué puedo asistirte hoy?
-                    </div>
-                `;
+                chatContainer.innerHTML = '<div class="message bot-message"><strong>Bienvenido al Asistente de IA de Evidenze</strong><br>Soy tu asistente inteligente especializado en investigación clínica y servicios farmacéuticos.<br>Puedo ayudarte con consultas profesionales y recordaré nuestra conversación durante esta sesión.<br>¿En qué puedo asistirte hoy?</div>';
                 
                 updateMessageCount();
             }
