@@ -74,6 +74,12 @@ HTML_TEMPLATE = """
             align-items: center;
             justify-content: center;
             gap: 10px;
+            letter-spacing: 0.5px;
+        }
+        
+        .logo img {
+            height: 35px;
+            width: auto;
         }
         
         .tagline {
@@ -277,13 +283,13 @@ HTML_TEMPLATE = """
     <div class="chat-wrapper">
         <div class="header">
             <div class="logo">
-                🤖 EVIDENZE
+                <img src="https://evidenze.com/assets/front/img/logos/logoEvidenze_blanco.png" alt="Evidenze" onerror="this.style.display='none'; this.parentElement.innerHTML='EVIDENZE AI';">
             </div>
             <div class="tagline">
                 Bot prueba con seguridad GDPR Evidenze
             </div>
             <div class="security-badge">
-                🔒 Memoria temporal por sesión para pruebas
+                ● Memoria temporal por sesión para pruebas
             </div>
         </div>
         
@@ -293,14 +299,15 @@ HTML_TEMPLATE = """
                     <span id="message-count">0</span> mensajes en esta sesión
                 </div>
                 <button class="clear-btn" onclick="clearConversation()">
-                    🗑️ Limpiar historial
+                    ↻ Limpiar historial
                 </button>
             </div>
         </div>
         
         <div id="chat-container" class="chat-container">
             <div class="message bot-message">
-                ¡Hola! 👋 Soy el <strong>Asistente de IA de Evidenze</strong>.<br>
+                <strong>Bienvenido al Asistente de IA de Evidenze</strong><br>
+                Soy tu asistente inteligente especializado en investigación clínica y servicios farmacéuticos.<br>
                 Puedo ayudarte con consultas profesionales y recordaré nuestra conversación durante esta sesión.<br>
                 ¿En qué puedo asistirte hoy?
             </div>
@@ -343,6 +350,8 @@ HTML_TEMPLATE = """
             
             if (!message) return;
             
+            console.log('Enviando mensaje:', message); // Debug
+            
             // Deshabilitar input
             sendBtn.disabled = true;
             sendBtn.textContent = 'Enviando...';
@@ -368,16 +377,28 @@ HTML_TEMPLATE = """
             scrollToBottom();
             
             try {
+                console.log('Enviando request a /chat'); // Debug
+                
                 // Enviar historial completo al backend
                 const response = await fetch('/chat', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
                     body: JSON.stringify({ 
                         messages: conversationHistory 
                     })
                 });
                 
+                console.log('Response status:', response.status); // Debug
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const data = await response.json();
+                console.log('Response data:', data); // Debug
                 
                 // Remover indicador de carga
                 loadingDiv.remove();
@@ -395,6 +416,7 @@ HTML_TEMPLATE = """
                 }
                 
             } catch (error) {
+                console.error('Error:', error); // Debug
                 loadingDiv.remove();
                 addMessage('❌ Error: Problema de conexión con el servidor', 'bot-message error-message');
             }
@@ -434,7 +456,8 @@ HTML_TEMPLATE = """
                 const chatContainer = document.getElementById('chat-container');
                 chatContainer.innerHTML = `
                     <div class="message bot-message">
-                        ¡Hola! 👋 Soy el <strong>Asistente de IA de Evidenze</strong>.<br>
+                        <strong>Bienvenido al Asistente de IA de Evidenze</strong><br>
+                        Soy tu asistente inteligente especializado en investigación clínica y servicios farmacéuticos.<br>
                         Puedo ayudarte con consultas profesionales y recordaré nuestra conversación durante esta sesión.<br>
                         ¿En qué puedo asistirte hoy?
                     </div>
@@ -451,8 +474,13 @@ HTML_TEMPLATE = """
             }
         }
         
-        // Focus inicial
-        document.getElementById('message-input').focus();
+        // Focus inicial y event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('message-input').focus();
+            
+            // Backup event listener para el botón enviar
+            document.getElementById('send-btn').addEventListener('click', sendMessage);
+        });
     </script>
 </body>
 </html>
