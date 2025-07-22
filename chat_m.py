@@ -337,12 +337,7 @@ HTML_TEMPLATE = """
         
         let messageCount = 0;
         
-        // Auto-resize del textarea
-        document.getElementById('message-input').addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = this.scrollHeight + 'px';
-        });
-        
+        // Función para enviar mensaje
         async function sendMessage() {
             const input = document.getElementById('message-input');
             const sendBtn = document.getElementById('send-btn');
@@ -350,7 +345,7 @@ HTML_TEMPLATE = """
             
             if (!message) return;
             
-            console.log('Enviando mensaje:', message); // Debug
+            console.log('Enviando mensaje:', message);
             
             // Deshabilitar input
             sendBtn.disabled = true;
@@ -377,7 +372,7 @@ HTML_TEMPLATE = """
             scrollToBottom();
             
             try {
-                console.log('Enviando request a /chat'); // Debug
+                console.log('Enviando request a /chat');
                 
                 // Enviar historial completo al backend
                 const response = await fetch('/chat', {
@@ -391,14 +386,14 @@ HTML_TEMPLATE = """
                     })
                 });
                 
-                console.log('Response status:', response.status); // Debug
+                console.log('Response status:', response.status);
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
                 const data = await response.json();
-                console.log('Response data:', data); // Debug
+                console.log('Response data:', data);
                 
                 // Remover indicador de carga
                 loadingDiv.remove();
@@ -416,7 +411,7 @@ HTML_TEMPLATE = """
                 }
                 
             } catch (error) {
-                console.error('Error:', error); // Debug
+                console.error('Error:', error);
                 loadingDiv.remove();
                 addMessage('❌ Error: Problema de conexión con el servidor', 'bot-message error-message');
             }
@@ -427,6 +422,7 @@ HTML_TEMPLATE = """
             input.focus();
         }
         
+        // Función para agregar mensaje
         function addMessage(text, className) {
             const chatContainer = document.getElementById('chat-container');
             const messageDiv = document.createElement('div');
@@ -436,23 +432,23 @@ HTML_TEMPLATE = """
             scrollToBottom();
         }
         
+        // Función para scroll
         function scrollToBottom() {
             const chatContainer = document.getElementById('chat-container');
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
         
+        // Función para actualizar contador
         function updateMessageCount() {
-            // Contar solo mensajes de usuario (excluir system prompt)
             const userMessages = conversationHistory.filter(msg => msg.role === 'user').length;
             document.getElementById('message-count').textContent = userMessages;
         }
         
+        // Función para limpiar conversación
         function clearConversation() {
             if (confirm('¿Estás seguro de que quieres limpiar el historial de la conversación?')) {
-                // Resetear historial (mantener solo system prompt)
                 conversationHistory = [conversationHistory[0]];
                 
-                // Limpiar interfaz
                 const chatContainer = document.getElementById('chat-container');
                 chatContainer.innerHTML = `
                     <div class="message bot-message">
@@ -467,6 +463,7 @@ HTML_TEMPLATE = """
             }
         }
         
+        // Función para manejar teclas
         function handleKeyDown(event) {
             if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
@@ -474,13 +471,33 @@ HTML_TEMPLATE = """
             }
         }
         
-        // Focus inicial y event listeners
+        // Auto-resize del textarea
+        function setupTextarea() {
+            const textarea = document.getElementById('message-input');
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = this.scrollHeight + 'px';
+            });
+        }
+        
+        // Inicialización cuando se carga la página
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM cargado, inicializando...');
+            
+            // Setup del textarea
+            setupTextarea();
+            
+            // Focus inicial
             document.getElementById('message-input').focus();
             
-            // Backup event listener para el botón enviar
+            // Event listener de respaldo para el botón
             document.getElementById('send-btn').addEventListener('click', sendMessage);
         });
+        
+        // Hacer funciones globales (por si acaso)
+        window.sendMessage = sendMessage;
+        window.clearConversation = clearConversation;
+        window.handleKeyDown = handleKeyDown;
     </script>
 </body>
 </html>
